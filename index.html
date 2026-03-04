@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#e8a020"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RAMS"/>
+<link rel="manifest" id="pwa-manifest"/>
+<title>RAMS – Rana Ahmad Milk Shop</title>
+
+<!-- ✅ FIX 1: Correct CDN libraries – jsPDF UMD + html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root{
+  --cream:#fef9f0;--milk:#fffdf7;--gold:#e8a020;--amber:#d97706;
+  --dark:#000000;--dark2:#1e293b;--slate:#64748b;--text:#1e293b;
+  --border:#e2d9c8;--card-bg:#fffdf7;--input-bg:#fef9f0;
+}
+[data-theme="dark"]{
+  --cream:#000000;--milk:#1e293b;--gold:#f5c842;--amber:#f59e0b;
+  --text:#f1f5f9;--border:#334155;--card-bg:#1e293b;--input-bg:#0f172a;--slate:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;transition:background .3s,border .3s}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--amber));color:#fff;font-weight:600;border:none;border-radius:10px;padding:10px 20px;cursor:pointer;font-family:'Sora',sans-serif;font-size:14px;transition:opacity .2s,transform .1s}
+.btn-gold:hover{opacity:.9;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:10px 20px;cursor:pointer;font-family:'Sora',sans-serif;font-size:14px;transition:border-color .2s,background .2s}
+.btn-ghost:hover{border-color:var(--gold)}
+.btn-danger{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:'Sora',sans-serif;font-size:12px}
+.btn-whatsapp{background:#25D366;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600}
+.btn-sms{background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600}
+.nav-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;cursor:pointer;transition:background .2s,color .2s;color:var(--slate);font-size:10px;font-weight:500;border:none;background:transparent;font-family:'Sora',sans-serif}
+.nav-tab.active{background:rgba(232,160,32,.15);color:var(--gold)}
+.nav-tab svg{width:22px;height:22px}
+input,select,textarea{background:var(--input-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;width:100%;outline:none;transition:border-color .2s,background .3s}
+input:focus,select:focus{border-color:var(--gold)}
+label{font-size:12px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;display:block}
+.mono{font-family:'JetBrains Mono',monospace}
+.page{display:none}.page.active{display:block}
+.stat-card{background:linear-gradient(135deg,var(--gold) 0%,var(--amber) 100%);border-radius:16px;padding:18px;color:#fff}
+.stat-card.blue{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.stat-card.green{background:linear-gradient(135deg,#22c55e,#15803d)}
+.stat-card.purple{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#16a34a}
+.badge-red{background:#fee2e2;color:#dc2626}
+[data-theme="dark"] .badge-green{background:rgba(22,163,74,.2);color:#4ade80}
+[data-theme="dark"] .badge-red{background:rgba(220,38,38,.2);color:#f87171}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px;display:none;overflow-y:auto;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card-bg);border-radius:20px;padding:24px;width:100%;max-width:440px;border:1px solid var(--border);animation:slideUp .2s ease;margin:auto;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.today-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:var(--input-bg);border:1px solid var(--border);margin-bottom:8px}
+.qty-input{width:68px!important;text-align:center;padding:6px 8px!important;font-weight:600}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.toast.show{opacity:1}
+[data-theme="dark"] .toast{background:#f1f5f9;color:#0f172a}
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 12px;z-index:100;transition:background .3s}
+.main-content{padding-bottom:80px;max-width:500px;margin:0 auto;padding-left:14px;padding-right:14px;padding-top:14px}
+.chart-wrap{position:relative;height:200px;margin-top:8px}
+.tab-pill{display:inline-flex;background:var(--input-bg);border:1px solid var(--border);border-radius:30px;padding:3px}
+.tab-pill button{border:none;background:transparent;padding:6px 14px;border-radius:24px;font-family:'Sora',sans-serif;font-size:11px;font-weight:600;cursor:pointer;color:var(--slate);transition:all .2s}
+.tab-pill button.active{background:var(--gold);color:#fff}
+.pwa-banner{display:none;background:linear-gradient(135deg,var(--gold),var(--amber));color:#fff;padding:12px 16px;border-radius:14px;margin-bottom:14px;font-size:13px;align-items:center;gap:12px}
+.pwa-banner.show{display:flex}
+select option{background:var(--card-bg);color:var(--text)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+/* ✅ Bill area rendered off-screen for html2canvas */
+#bill-render-area{
+  position:fixed;left:-9999px;top:0;width:794px;
+  background:#fff;color:#111;font-family:'San Francisco',-apple-system,system-ui,sans-serif;
+  padding:40px;z-index:-1;
+}
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;display:none;backdrop-filter:blur(4px);
+}
+.loading-overlay.show{display:flex}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body data-theme="light">
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div style="text-align:center;color:#fff">
+    <div class="spinner" style="margin:0 auto 12px"></div>
+    <div style="font-size:14px;font-weight:600" id="loading-msg">Generating PDF...</div>
+  </div>
+</div>
+
+<!-- PWA BANNER -->
+<div class="pwa-banner" id="pwa-banner">
+  <span style="font-size:24px">📲</span>
+  <div style="flex:1">
+    <div style="font-weight:700;font-size:13px">Install R.A.M.S</div>
+    <div style="font-size:11px;opacity:.85">Add to home screen for offline use</div>
+  </div>
+  <button onclick="installPWA()" style="background:rgba(255,255,255,.3);border:none;border-radius:8px;padding:6px 14px;color:#fff;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px">Install</button>
+  <button onclick="dismissBanner()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px">×</button>
+</div>
+
+<!-- HEADER -->
+<div style="position:sticky;top:0;z-index:50;background:var(--card-bg);border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;transition:background .3s;box-shadow:0 2px 8px rgba(0,0,0,.05)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--amber));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🐄</div>
+    <div>
+      <div style="font-size:16px;font-weight:800;color:var(--gold);line-height:1.1">Rana Ahmad</div>
+      <div style="font-size:10px;color:var(--slate);font-weight:600;letter-spacing:.05em">MILK SHOP (R.A.M.S)</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="todayDate" style="font-size:11px;color:var(--slate)"></span>
+    <button onclick="toggleTheme()" style="background:var(--input-bg);border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;color:var(--text);font-size:15px"><span id="themeIcon">🌙</span></button>
+  </div>
+</div>
+
+<div class="main-content">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="page-dashboard" class="page active">
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">📊 Overview</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="stat-card"><div style="font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.05em">Today Sold</div><div class="mono" style="font-size:24px;font-weight:700;margin:4px 0" id="stat-today-litres">0 L</div><div style="font-size:12px;opacity:.85" id="stat-today-amount">Rs. 0</div></div>
+    <div class="stat-card blue"><div style="font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.05em">Pending</div><div class="mono" style="font-size:24px;font-weight:700;margin:4px 0" id="stat-pending">Rs. 0</div><div style="font-size:12px;opacity:.85" id="stat-customers">0 customers</div></div>
+    <div class="stat-card green"><div style="font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.05em">Month Billed</div><div class="mono" style="font-size:24px;font-weight:700;margin:4px 0" id="stat-month-billed">Rs. 0</div><div style="font-size:12px;opacity:.85" id="stat-month-litres">0 L</div></div>
+    <div class="stat-card purple"><div style="font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.05em">Collected</div><div class="mono" style="font-size:24px;font-weight:700;margin:4px 0" id="stat-month-collected">Rs. 0</div><div style="font-size:12px;opacity:.85">this month</div></div>
+  </div>
+  <div class="card" style="padding:16px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:14px;font-weight:700">Analytics</div>
+      <div class="tab-pill" style="margin:0">
+        <button class="active" id="chart-tab-litres" onclick="switchChart('litres')">Litres</button>
+        <button id="chart-tab-revenue" onclick="switchChart('revenue')">Revenue</button>
+        <button id="chart-tab-customers" onclick="switchChart('customers')">Customers</button>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  </div>
+  <div class="card" style="padding:16px;margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">Top Customers <span style="font-size:11px;color:var(--slate);font-weight:400">(this month)</span></div>
+    <div id="top-customers"></div>
+  </div>
+  <div class="card" style="padding:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">Recent Activity</div>
+    <div id="recent-activity" style="font-size:13px;color:var(--slate)">No activity yet</div>
+  </div>
+</div>
+
+<!-- ═══ CUSTOMERS ═══ -->
+<div id="page-customers" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-size:20px;font-weight:700">Customers</div>
+    <button class="btn-gold" onclick="openModal('modal-add-customer')">+ Add</button>
+  </div>
+  <input type="text" id="customer-search" placeholder="🔍  Search customers..." onkeyup="renderCustomers()" style="margin-bottom:14px"/>
+  <div id="customer-list"></div>
+</div>
+
+<!-- ═══ LEDGER ═══ -->
+<div id="page-ledger" class="page">
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Daily Ledger</div>
+  <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+    <input type="date" id="ledger-date" onchange="renderLedger()" style="flex:1"/>
+    <button class="btn-ghost" onclick="setToday()" style="white-space:nowrap;padding:10px 12px;font-size:12px">Today</button>
+  </div>
+  <div id="ledger-summary" style="display:flex;gap:10px;margin-bottom:14px"></div>
+  <div id="ledger-list"></div>
+  <button class="btn-gold" onclick="saveLedger()" style="width:100%;margin-top:8px">💾 Save All Entries</button>
+</div>
+
+<!-- ═══ REPORTS ═══ -->
+<div id="page-reports" class="page">
+  <div style="font-size:20px;font-weight:700;margin-bottom:14px">Reports & Bills</div>
+
+  <div class="card" style="padding:16px;margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">Generate Bill / Report</div>
+    <div style="display:grid;gap:12px">
+      <div><label>Customer</label>
+        <select id="report-customer" onchange="onReportFilterChange()">
+          <option value="">All Customers</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label>Month</label><select id="report-month" onchange="onReportFilterChange()"></select></div>
+        <div><label>Report Type</label>
+          <select id="report-type" onchange="onReportFilterChange()">
+            <option value="bill">Monthly Bill</option>
+            <option value="summary">Summary</option>
+            <option value="attendance">Attendance</option>
+          </select>
+        </div>
+      </div>
+      <div id="report-summary-bar" style="padding:12px;background:var(--input-bg);border-radius:10px;font-size:13px;display:none"></div>
+      <!-- ✅ FIX 5: Correct onclick attributes wired to correct functions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button class="btn-ghost" onclick="previewBill()" style="font-size:12px;padding:9px 6px">👁 Preview</button>
+        <button class="btn-gold" onclick="generatePDF()" style="font-size:12px;padding:9px 6px">📄 PDF</button>
+        <button class="btn-ghost" onclick="exportExcel()" style="font-size:12px;padding:9px 6px">📊 Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:16px;margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px">📣 Reminders</div>
+    <div style="font-size:12px;color:var(--slate);margin-bottom:12px">Send payment reminders via WhatsApp or SMS</div>
+    <div><label>Message Template</label>
+      <textarea id="reminder-template" rows="3" style="resize:vertical;font-size:13px">Assalam o Alaikum {name} Sahib, aapka {month} ka doodh ka bill Rs. {amount} hai. Mehrbani kar jaldi ada karein. Shukriya! – Rana Ahmad Milk Shop</textarea>
+    </div>
+    <div id="reminder-list" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card" style="padding:16px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">💰 Payment Collection</div>
+    <div id="payment-list"></div>
+  </div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav-bar">
+  <button class="nav-tab active" id="tab-dashboard" onclick="switchPage('dashboard')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+  </button>
+  <button class="nav-tab" id="tab-customers" onclick="switchPage('customers')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>Customers
+  </button>
+  <button class="nav-tab" id="tab-ledger" onclick="switchPage('ledger')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Ledger
+  </button>
+  <button class="nav-tab" id="tab-reports" onclick="switchPage('reports')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Reports
+  </button>
+</nav>
+
+<!-- ═══ MODALS ═══ -->
+<!-- Add Customer -->
+<div class="modal-overlay" id="modal-add-customer">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:700">Add Customer</div>
+      <button onclick="closeModal('modal-add-customer')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate)">×</button>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div><label>Name *</label><input type="text" id="new-name" placeholder="e.g. Muhammad Ali"/></div>
+      <div><label>Phone (Pakistan)</label>
+        <div style="display:flex;gap:8px">
+          <div style="background:var(--input-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;white-space:nowrap;font-weight:700;color:var(--gold);font-size:13px">🇵🇰 +92</div>
+          <input type="tel" id="new-phone" placeholder="3XX-XXXXXXX" style="flex:1"/>
+        </div>
+      </div>
+      <div><label>Rate (Rs./Litre) *</label><input type="number" id="new-rate" placeholder="200" step="1"/></div>
+      <div><label>Default Daily Qty (L)</label><input type="number" id="new-qty" placeholder="2" step="0.5"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <button class="btn-ghost" onclick="closeModal('modal-add-customer')">Cancel</button>
+        <button class="btn-gold" onclick="addCustomer()">Add Customer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Customer -->
+<div class="modal-overlay" id="modal-edit-customer">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:700">Edit Customer</div>
+      <button onclick="closeModal('modal-edit-customer')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate)">×</button>
+    </div>
+    <div style="display:grid;gap:12px">
+      <input type="hidden" id="edit-id"/>
+      <div><label>Name *</label><input type="text" id="edit-name"/></div>
+      <div><label>Phone</label><input type="tel" id="edit-phone"/></div>
+      <div><label>Rate (Rs./Litre) *</label><input type="number" id="edit-rate" step="1"/></div>
+      <div><label>Default Daily Qty (L)</label><input type="number" id="edit-qty" step="0.5"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <button class="btn-ghost" onclick="closeModal('modal-edit-customer')">Cancel</button>
+        <button class="btn-gold" onclick="saveEditCustomer()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:700">Record Payment</div>
+      <button onclick="closeModal('modal-payment')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate)">×</button>
+    </div>
+    <div style="display:grid;gap:12px">
+      <input type="hidden" id="pay-customer-id"/>
+      <div id="pay-customer-info" style="padding:12px;background:var(--input-bg);border-radius:10px;font-size:13px;border:1px solid var(--border)"></div>
+      <div><label>Amount (Rs.)</label><input type="number" id="pay-amount" placeholder="0"/></div>
+      <div><label>Date</label><input type="date" id="pay-date"/></div>
+      <div><label>Payment Method</label>
+        <select id="pay-note">
+          <option value=" Cash">Naghd (Cash)</option>
+          <option value="Easypaisa">Easypaisa</option>
+          <option value="JazzCash">JazzCash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Raast">Raast</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <button class="btn-ghost" onclick="closeModal('modal-payment')">Cancel</button>
+        <button class="btn-gold" onclick="recordPayment()">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ FIX: Bill Preview Modal with correct ID -->
+<div class="modal-overlay" id="modal-bill-preview" style="align-items:flex-start;padding-top:16px">
+  <div class="modal" style="max-width:520px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:700">Bill Preview</div>
+      <button onclick="closeModal('modal-bill-preview')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate)">×</button>
+    </div>
+    <!-- ✅ FIX 5: Bill area with ID used by html2canvas -->
+    <div id="bill-preview-content"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <!-- ✅ FIX 5: Correct onclick – generatePDF() and downloadImage() -->
+      <button class="btn-ghost" onclick="downloadImage()" style="font-size:13px">🖼 Save as Image</button>
+      <button class="btn-gold" onclick="generatePDF()" style="font-size:13px">📄 Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reminder Modal -->
+<div class="modal-overlay" id="modal-reminder">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:700">Send Reminder</div>
+      <button onclick="closeModal('modal-reminder')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--slate)">×</button>
+    </div>
+    <div id="reminder-preview-content" style="margin-bottom:14px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn-sms" onclick="sendSMS()">📱 SMS</button>
+      <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ FIX 3: Off-screen bill render area for html2canvas (supports Urdu/Latin fonts) -->
+<div id="bill-render-area"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// ✅ FIX 4: Startup library check with console + alert
+// ════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const checks = {
+    jsPDF: !!(window.jspdf && window.jspdf.jsPDF),
+    html2canvas: typeof window.html2canvas === 'function',
+    Chart: typeof window.Chart !== 'undefined',
+  };
+  console.log('[RAMS] Library check:', checks);
+  const failed = Object.entries(checks).filter(([,ok])=>!ok).map(([k])=>k);
+  if (failed.length) {
+    console.error('[RAMS] Missing libraries:', failed);
+    // Only alert if jsPDF or html2canvas missing — they are critical
+    if (failed.includes('jsPDF') || failed.includes('html2canvas')) {
+      alert('⚠️ RAMS: Required libraries failed to load (' + failed.join(', ') + '). Check your internet connection and refresh.');
+    }
+  } else {
+    console.log('[RAMS] ✅ All libraries loaded successfully.');
+  }
+});
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const K = { C:'rams_customers', L:'rams_ledger', P:'rams_payments' };
+const load = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
+const save = (k, d) => localStorage.setItem(k, JSON.stringify(d));
+
+let customers = load(K.C), ledger = load(K.L), payments = load(K.P);
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const todayStr = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => new Date(d+'T00:00:00').toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'});
+// ✅ FIX: PKR formatting – no ₹, uses Rs. with comma separator
+const fmtMoney = n => 'Rs. ' + Math.round(+n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const fmtMoneyFull = n => 'Rs. ' + (+n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const curMonth = () => new Date().toISOString().slice(0,7);
+
+function showToast(msg, dur=2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function showLoading(msg='Generating...') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+let theme = localStorage.getItem('rams_theme') || 'light';
+document.body.setAttribute('data-theme', theme);
+document.getElementById('themeIcon').textContent = theme==='dark'?'☀️':'🌙';
+function toggleTheme() {
+  theme = theme==='light'?'dark':'light';
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('rams_theme', theme);
+  document.getElementById('themeIcon').textContent = theme==='dark'?'☀️':'🌙';
+  rebuildChart();
+}
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short'});
+
+// ─── PWA ──────────────────────────────────────────────────────────────────────
+const manifest = {name:"Rana Ahmad Milk Shop",short_name:"R.A.M.S",start_url:"./",display:"standalone",background_color:"#fef9f0",theme_color:"#e8a020",icons:[{src:"https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f404.png",sizes:"192x192",type:"image/png"}]};
+const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt=e; document.getElementById('pwa-banner').classList.add('show'); });
+function installPWA() { if(!deferredPrompt){showToast('Open in browser to install');return;} deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{deferredPrompt=null;dismissBanner();}); }
+function dismissBanner() { document.getElementById('pwa-banner').classList.remove('show'); }
+if('serviceWorker' in navigator){const sc=`const C='rams-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['/']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sc],{type:'text/javascript'}))).catch(()=>{});}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function switchPage(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('tab-'+p).classList.add('active');
+  if(p==='dashboard') renderDashboard();
+  if(p==='customers') renderCustomers();
+  if(p==='ledger') renderLedger();
+  if(p==='reports') renderReports();
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ─── CUSTOMERS ────────────────────────────────────────────────────────────────
+function addCustomer() {
+    // ان پٹ فیلڈز کو ویری ایبلز میں لیں۔
+    const nameEl = document.getElementById('new-name');
+    const phoneEl = document.getElementById('new-phone');
+    const rateEl = document.getElementById('new-rate');
+    const qtyEl = document.getElementById('new-qty');
+
+    // ویلیوز حاصل کریں
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const rate = parseFloat(rateEl.value);
+    const qty = parseFloat(qtyEl.value) || 0;
+
+    // بنیادی چیک
+    if (!name || isNaN(rate)) {
+        showToast('⚠️ Name & rate required');
+        return;
+    }
+
+    // ڈیٹا کو کسٹمر لسٹ میں ڈالیں (address نکال دیا ہے کیونکہ HTML میں نہیں ہے)
+    customers.push({
+        id: uid(),
+        name: name,
+        phone: "+92 " + phone,
+        rate: rate,
+        defaultQty: qty,
+        createdAt: todayStr()
+    });
+
+    // ڈیٹا سیو کریں
+    save(K.C, customers);
+
+    // فیلڈز کو صاف کریں (یہاں سے بھی 'new-address' نکال دیا ہے)
+    ['new-name', 'new-phone', 'new-rate', 'new-qty'].forEach(i => {
+        document.getElementById(i).value = '';
+    });
+
+    // ماڈل بند کریں اور لسٹ اپڈیٹ کریں
+    closeModal('modal-add-customer');
+    showToast('✅ Customer added');
+    renderCustomers();
+}
+function editCustomer(id) {
+  const c=customers.find(x=>x.id===id); if(!c)return;
+  document.getElementById('edit-id').value=c.id;
+  document.getElementById('edit-name').value=c.name;
+  document.getElementById('edit-phone').value=c.phone||'';
+  document.getElementById('edit-rate').value=c.rate;
+  document.getElementById('edit-qty').value=c.defaultQty||'';
+  openModal('modal-edit-customer');
+}
+function saveEditCustomer() {
+  const id=document.getElementById('edit-id').value;
+  const idx=customers.findIndex(x=>x.id===id); if(idx<0)return;
+  customers[idx]={...customers[idx],name:document.getElementById('edit-name').value.trim(),phone:document.getElementById('edit-phone').value.trim(),rate:parseFloat(document.getElementById('edit-rate').value),defaultQty:parseFloat(document.getElementById('edit-qty').value)||0};
+  save(K.C,customers); closeModal('modal-edit-customer'); showToast('✅ Updated'); renderCustomers();
+}
+function deleteCustomer(id) {
+  if(!confirm('Delete this customer? All their ledger entries will remain.'))return;
+  customers=customers.filter(x=>x.id!==id); save(K.C,customers); showToast('🗑 Removed'); renderCustomers();
+}
+function getBalance(cid) {
+  const billed=ledger.filter(e=>e.customerId===cid&&!e.absent).reduce((s,e)=>{const c=customers.find(x=>x.id===cid);return s+(e.qty||0)*(c?c.rate:0);},0);
+  return billed - payments.filter(p=>p.customerId===cid).reduce((s,p)=>s+(p.amount||0),0);
+}
+function renderCustomers() {
+  const q=(document.getElementById('customer-search').value||'').toLowerCase();
+  const list=document.getElementById('customer-list');
+  const fl=customers.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));
+  
+  if(!fl.length){list.innerHTML='<div style="text-align:center;color:var(--slate);padding:40px;font-size:14px">No customers found.<br/>Add your first customer!</div>';return;}
+  list.innerHTML=fl.map(c=>{
+    const bal=getBalance(c.id);
+    return `<div style="padding:14px;border-radius:14px;background:var(--input-bg);border:1px solid var(--border);margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:14px">${c.name}</div>
+          ${c.phone?`<div style="font-size:12px;color:var(--slate)">📞 +92 ${c.phone}</div>`:''}
+          ${c.address?`<div style="font-size:12px;color:var(--slate)">📍 ${c.address}</div>`:''}
+        </div>
+        <span class="badge ${bal>0?'badge-red':'badge-green'}">${bal>0?'Due: '+fmtMoney(bal):'Paid ✓'}</span>
+      </div>
+      <hr class="divider"/>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12px;color:var(--slate)">Rate: <span class="mono" style="color:var(--text);font-weight:600">${fmtMoney(c.rate)}/L</span>${c.defaultQty?` · Default: <span class="mono">${c.defaultQty}L</span>`:''}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="openPaymentModal('${c.id}')" class="btn-gold" style="padding:5px 10px;font-size:11px">💰 Pay</button>
+          <button onclick="editCustomer('${c.id}')" class="btn-ghost" style="padding:5px 10px;font-size:11px">✏️</button>
+          <button onclick="deleteCustomer('${c.id}')" class="btn-danger" style="padding:5px 10px">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── LEDGER ───────────────────────────────────────────────────────────────────
+function setToday(){document.getElementById('ledger-date').value=todayStr();renderLedger();}
+function renderLedger() {
+  const date=document.getElementById('ledger-date').value; if(!date)return;
+  const list=document.getElementById('ledger-list');
+  if(!customers.length){list.innerHTML='<div style="text-align:center;color:var(--slate);padding:30px">Add customers first</div>';return;}
+  list.innerHTML=customers.map(c=>{
+    const entry=ledger.find(e=>e.date===date&&e.customerId===c.id);
+    const qty=entry?entry.qty:(c.defaultQty||0), absent=entry?entry.absent:false;
+    return `<div class="today-row" id="row-${c.id}">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+        <div style="font-size:11px;color:var(--slate)">${fmtMoney(c.rate)}/L</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;text-transform:none;letter-spacing:0;color:var(--slate);margin:0;white-space:nowrap">
+        <input type="checkbox" id="absent-${c.id}" ${absent?'checked':''} onchange="toggleAbsent('${c.id}')" style="width:auto;accent-color:var(--gold)"/>Absent
+      </label>
+      <input type="number" class="qty-input" id="qty-${c.id}" value="${qty}" step="0.5" min="0" ${absent?'disabled style="opacity:.4"':''}/>
+      <div class="mono" id="amt-${c.id}" style="font-size:12px;font-weight:600;min-width:52px;text-align:right;color:var(--gold)">${absent?'—':fmtMoney(qty*c.rate)}</div>
+    </div>`;
+  }).join('');
+  customers.forEach(c=>{
+    const q=document.getElementById('qty-'+c.id);
+    if(q) q.addEventListener('input',()=>{ document.getElementById('amt-'+c.id).textContent=fmtMoney((parseFloat(q.value)||0)*c.rate); });
+  });
+  renderLedgerSummary(date);
+}
+function toggleAbsent(cid) {
+  const checked=document.getElementById('absent-'+cid).checked;
+  const q=document.getElementById('qty-'+cid), a=document.getElementById('amt-'+cid);
+  q.disabled=checked; q.style.opacity=checked?'.4':'1';
+  a.textContent=checked?'—':fmtMoney((parseFloat(q.value)||0)*(customers.find(c=>c.id===cid)||{rate:0}).rate);
+}
+function saveLedger() {
+  const date=document.getElementById('ledger-date').value; if(!date){showToast('Select a date');return;}
+  customers.forEach(c=>{
+    const absent=document.getElementById('absent-'+c.id).checked;
+    const qty=parseFloat(document.getElementById('qty-'+c.id).value)||0;
+    const idx=ledger.findIndex(e=>e.date===date&&e.customerId===c.id);
+    const entry={date,customerId:c.id,qty,absent};
+    if(idx>=0) ledger[idx]=entry; else ledger.push(entry);
+  });
+  save(K.L,ledger); showToast('✅ Saved for '+fmtDate(date)); renderLedgerSummary(date);
+}
+function renderLedgerSummary(date) {
+  const e=ledger.filter(x=>x.date===date&&!x.absent);
+  const L=e.reduce((s,x)=>s+(x.qty||0),0);
+  const A=e.reduce((s,x)=>{const c=customers.find(y=>y.id===x.customerId);return s+(x.qty||0)*(c?c.rate:0);},0);
+  document.getElementById('ledger-summary').innerHTML=`
+    <div class="stat-card" style="flex:1;padding:12px"><div style="font-size:10px;opacity:.8">Total Litres</div><div class="mono" style="font-size:20px;font-weight:700">${L.toFixed(1)} L</div></div>
+    <div class="stat-card blue" style="flex:1;padding:12px"><div style="font-size:10px;opacity:.8">Total Amount</div><div class="mono" style="font-size:20px;font-weight:700">${fmtMoney(A)}</div></div>`;
+}
+
+// ─── CHART ────────────────────────────────────────────────────────────────────
+let chartInstance=null, activeChartType='litres';
+function getLast7Days(){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});}
+function buildChartData(type) {
+  const isDark=theme==='dark';
+  const gridColor=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const textColor=isDark?'#94a3b8':'#64748b';
+  if(type==='customers'){
+    const mon=curMonth();
+    const data=customers.map(c=>{const L=ledger.filter(e=>e.date.startsWith(mon)&&e.customerId===c.id&&!e.absent).reduce((s,e)=>s+(e.qty||0),0);return{name:c.name,L};}).filter(x=>x.L>0).sort((a,b)=>b.L-a.L).slice(0,6);
+    return{type:'doughnut',data:{labels:data.map(x=>x.name),datasets:[{data:data.map(x=>x.L),backgroundColor:['#e8a020','#3b82f6','#22c55e','#a855f7','#ef4444','#f59e0b'],borderWidth:2,borderColor:isDark?'#1e293b':'#fffdf7'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Sora',size:11},color:textColor,boxWidth:12}}}}};
+  }
+  const days=getLast7Days();
+  const labels=days.map(d=>new Date(d+'T00:00:00').toLocaleDateString('en-PK',{day:'2-digit',month:'short'}));
+  const values=type==='litres'?days.map(d=>ledger.filter(e=>e.date===d&&!e.absent).reduce((s,e)=>s+(e.qty||0),0)):days.map(d=>ledger.filter(e=>e.date===d&&!e.absent).reduce((s,e)=>{const c=customers.find(x=>x.id===e.customerId);return s+(e.qty||0)*(c?c.rate:0);},0));
+  return{type:'bar',data:{labels,datasets:[{label:type==='litres'?'Litres':'Revenue (Rs.)',data:values,backgroundColor:'rgba(232,160,32,0.7)',borderColor:'#e8a020',borderWidth:2,borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor,font:{family:'Sora',size:10}}},y:{grid:{color:gridColor},ticks:{color:textColor,font:{family:'Sora',size:10}}}}}};
+}
+function rebuildChart(){if(chartInstance){chartInstance.destroy();chartInstance=null;}chartInstance=new Chart(document.getElementById('mainChart'),buildChartData(activeChartType));}
+function switchChart(type){activeChartType=type;['litres','revenue','customers'].forEach(t=>document.getElementById('chart-tab-'+t).classList.toggle('active',t===type));rebuildChart();}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const today=todayStr(), mon=curMonth();
+  const te=ledger.filter(e=>e.date===today&&!e.absent);
+  const tL=te.reduce((s,e)=>s+(e.qty||0),0);
+  const tA=te.reduce((s,e)=>{const c=customers.find(x=>x.id===e.customerId);return s+(e.qty||0)*(c?c.rate:0);},0);
+  document.getElementById('stat-today-litres').textContent=tL.toFixed(1)+' L';
+  document.getElementById('stat-today-amount').textContent=fmtMoney(tA)+' earned';
+  const pending=customers.reduce((s,c)=>s+Math.max(0,getBalance(c.id)),0);
+  document.getElementById('stat-pending').textContent=fmtMoney(pending);
+  document.getElementById('stat-customers').textContent=customers.filter(c=>getBalance(c.id)>0).length+' customers';
+  const mE=ledger.filter(e=>e.date.startsWith(mon)&&!e.absent);
+  const mL=mE.reduce((s,e)=>s+(e.qty||0),0);
+  const mA=mE.reduce((s,e)=>{const c=customers.find(x=>x.id===e.customerId);return s+(e.qty||0)*(c?c.rate:0);},0);
+  const mP=payments.filter(p=>p.date.startsWith(mon)).reduce((s,p)=>s+(p.amount||0),0);
+  document.getElementById('stat-month-billed').textContent=fmtMoney(mA);
+  document.getElementById('stat-month-litres').textContent=mL.toFixed(1)+' L';
+  document.getElementById('stat-month-collected').textContent=fmtMoney(mP);
+  const top=customers.map(c=>{const L=mE.filter(e=>e.customerId===c.id).reduce((s,e)=>s+(e.qty||0),0);return{name:c.name,L,A:L*c.rate};}).filter(x=>x.L>0).sort((a,b)=>b.A-a.A).slice(0,5);
+  const maxA=top[0]?.A||1;
+  document.getElementById('top-customers').innerHTML=top.length?top.map(x=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:600">${x.name}</span><span class="mono" style="color:var(--gold)">${fmtMoney(x.A)}</span></div><div style="height:6px;background:var(--input-bg);border-radius:3px;overflow:hidden"><div style="height:100%;width:${(x.A/maxA*100).toFixed(1)}%;background:linear-gradient(90deg,var(--gold),var(--amber));border-radius:3px;transition:width .5s"></div></div></div>`).join(''):'<div style="font-size:13px;color:var(--slate)">No data this month</div>';
+  const dates=[...new Set(ledger.map(e=>e.date))].sort().reverse().slice(0,5);
+  document.getElementById('recent-activity').innerHTML=dates.length?dates.map(d=>{const e=ledger.filter(x=>x.date===d&&!x.absent);const L=e.reduce((s,x)=>s+(x.qty||0),0);const A=e.reduce((s,x)=>{const c=customers.find(y=>y.id===x.customerId);return s+(x.qty||0)*(c?c.rate:0);},0);return`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px">${fmtDate(d)}</span><span class="mono" style="font-size:12px;color:var(--gold)">${L.toFixed(1)}L &nbsp;${fmtMoney(A)}</span></div>`;}).join(''):'<div style="font-size:13px;color:var(--slate)">No entries yet</div>';
+  rebuildChart();
+}
+
+// ─── PAYMENTS ─────────────────────────────────────────────────────────────────
+function openPaymentModal(cid) {
+  const c=customers.find(x=>x.id===cid); if(!c)return;
+  const bal=getBalance(cid);
+  document.getElementById('pay-customer-id').value=cid;
+  document.getElementById('pay-customer-info').innerHTML=`<b style="font-size:14px">${c.name}</b><br/><span style="color:var(--slate)">Outstanding: </span><span class="mono" style="color:${bal>0?'#ef4444':'#22c55e'};font-weight:700">${fmtMoney(bal)}</span>`;
+  document.getElementById('pay-amount').value=bal>0?Math.round(bal):'';
+  document.getElementById('pay-date').value=todayStr();
+  openModal('modal-payment');
+}
+function recordPayment() {
+  const cid=document.getElementById('pay-customer-id').value;
+  const amount=parseFloat(document.getElementById('pay-amount').value);
+  if(!amount||amount<=0){showToast('Enter valid amount');return;}
+  payments.push({id:uid(),customerId:cid,amount,date:document.getElementById('pay-date').value,note:document.getElementById('pay-note').value});
+  save(K.P,payments); closeModal('modal-payment'); showToast('💰 Payment recorded');
+  renderCustomers(); renderReports();
+}
+
+// ─── REPORTS ─────────────────────────────────────────────────────────────────
+function populateMonthOptions(id) {
+  const sel=document.getElementById(id), now=new Date(); sel.innerHTML='';
+  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);sel.innerHTML+=`<option value="${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}">${d.toLocaleDateString('en-PK',{month:'long',year:'numeric'})}</option>`;}
+}
+function renderReports() {
+  const cSel=document.getElementById('report-customer');
+  cSel.innerHTML='<option value="">All Customers</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  populateMonthOptions('report-month');
+  onReportFilterChange(); renderReminderList(); renderPaymentList();
+}
+function onReportFilterChange() {
+  const cid=document.getElementById('report-customer').value;
+  const mon=document.getElementById('report-month').value; if(!mon)return;
+  const entries=ledger.filter(e=>e.date.startsWith(mon)&&!e.absent&&(cid?e.customerId===cid:true));
+  const L=entries.reduce((s,e)=>s+(e.qty||0),0);
+  const A=entries.reduce((s,e)=>{const c=customers.find(x=>x.id===e.customerId);return s+(e.qty||0)*(c?c.rate:0);},0);
+  const P=payments.filter(p=>p.date.startsWith(mon)&&(cid?p.customerId===cid:true)).reduce((s,p)=>s+(p.amount||0),0);
+  const bar=document.getElementById('report-summary-bar');
+  bar.style.display='block';
+  bar.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center"><div><div class="mono" style="font-weight:700;color:var(--gold)">${L.toFixed(1)}L</div><div style="font-size:10px;color:var(--slate)">Litres</div></div><div><div class="mono" style="font-weight:700">${fmtMoney(A)}</div><div style="font-size:10px;color:var(--slate)">Billed</div></div><div><div class="mono" style="font-weight:700;color:#22c55e">${fmtMoney(P)}</div><div style="font-size:10px;color:var(--slate)">Collected</div></div></div>`;
+}
+function renderReminderList() {
+  const mon=document.getElementById('report-month')?.value||curMonth();
+  const monthName=new Date(mon+'-01').toLocaleDateString('en-PK',{month:'long',year:'numeric'});
+  const due=customers.filter(c=>getBalance(c.id)>0&&c.phone);
+  document.getElementById('reminder-list').innerHTML=due.length?due.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:13px;font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--slate)">📞 +92 ${c.phone} · <span class="mono" style="color:#ef4444">${fmtMoney(getBalance(c.id))}</span></div></div><div style="display:flex;gap:6px"><button class="btn-whatsapp" onclick="openReminderModal('${c.id}')" style="padding:5px 10px;font-size:11px">WA</button><button class="btn-sms" onclick="openReminderModal('${c.id}')" style="padding:5px 10px;font-size:11px">SMS</button></div></div>`).join(''):'<div style="font-size:13px;color:var(--slate)">🎉 No pending dues!</div>';
+}
+function renderPaymentList() {
+  const list=document.getElementById('payment-list');
+  if(!customers.length){list.innerHTML='<div style="font-size:13px;color:var(--slate)">No customers yet</div>';return;}
+  list.innerHTML=customers.map(c=>{const bal=getBalance(c.id);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:13px;font-weight:600">${c.name}</div>${c.phone?`<div style="font-size:11px;color:var(--slate)">+92 ${c.phone}</div>`:''}</div><div style="display:flex;align-items:center;gap:8px"><span class="mono" style="font-weight:700;font-size:13px;color:${bal>0?'#ef4444':'#22c55e'}">${fmtMoney(Math.abs(bal))}</span>${bal>0?`<button class="btn-gold" onclick="openPaymentModal('${c.id}')" style="padding:5px 10px;font-size:11px">Collect</button>`:`<span class="badge badge-green">Clear</span>`}</div></div>`;}).join('');
+}
+
+// ─── REMINDERS ────────────────────────────────────────────────────────────────
+let activeReminderCustomer=null;
+function openReminderModal(cid) {
+  const c=customers.find(x=>x.id===cid); if(!c)return;
+  activeReminderCustomer=c;
+  const mon=document.getElementById('report-month')?.value||curMonth();
+  const monthName=new Date(mon+'-01').toLocaleDateString('en-PK',{month:'long',year:'numeric'});
+  const bal=getBalance(cid);
+  const tmpl=document.getElementById('reminder-template').value;
+  const msg=tmpl.replace('{name}',c.name).replace('{month}',monthName).replace('{amount}',Math.round(bal).toString().replace(/\B(?=(\d{3})+(?!\d))/g,','));
+  document.getElementById('reminder-preview-content').innerHTML=`<div style="padding:14px;background:var(--input-bg);border-radius:12px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--slate);margin-bottom:6px">Message for <b>${c.name}</b> (+92 ${c.phone})</div><div style="font-size:13px;line-height:1.5" id="reminder-msg-text">${msg}</div></div>`;
+  document.getElementById('reminder-msg-text').dataset.raw=msg;
+  openModal('modal-reminder');
+}
+// ✅ FIX: +92 not +91 for Pakistan
+function sendWhatsApp() {
+  if(!activeReminderCustomer)return;
+  const msg=document.getElementById('reminder-msg-text').dataset.raw;
+  const phone=activeReminderCustomer.phone.replace(/\D/g,'');
+  window.open(`https://wa.me/92${phone}?text=${encodeURIComponent(msg)}`,'_blank');
+  closeModal('modal-reminder'); showToast('💬 Opening WhatsApp…');
+}
+function sendSMS() {
+  if(!activeReminderCustomer)return;
+  const msg=document.getElementById('reminder-msg-text').dataset.raw;
+  const phone='0'+activeReminderCustomer.phone.replace(/\D/g,'');
+  window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`,'_blank');
+  closeModal('modal-reminder'); showToast('📱 Opening SMS…');
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ FIX 2 & 3: COMPLETE BILL DATA + PDF + IMAGE GENERATION
+// Uses canvas-to-pdf approach for full Urdu/Latin font support
+// ════════════════════════════════════════════════════════════
+let billData = null;
+
+// ✅ FIX 2: buildBillData() is now always called before any generation
+function buildBillData() {
+  const cid = document.getElementById('report-customer').value;
+  const mon = document.getElementById('report-month').value;
+  console.log('[RAMS] buildBillData() called — cid:', cid, 'mon:', mon);
+  if (!mon) { showToast('⚠️ Please select a month'); console.warn('[RAMS] No month selected'); return null; }
+  if (!cid) { showToast('⚠️ Please select a customer for bill'); console.warn('[RAMS] No customer selected'); return null; }
+  const c = customers.find(x => x.id === cid);
+  if (!c) { console.error('[RAMS] Customer not found:', cid); return null; }
+  const entries = ledger.filter(e => e.date.startsWith(mon) && e.customerId === cid).sort((a,b)=>a.date.localeCompare(b.date));
+  const mPay = payments.filter(p => p.customerId === cid && p.date.startsWith(mon));
+  const totalL = entries.filter(e=>!e.absent).reduce((s,e)=>s+(e.qty||0),0);
+  const totalA = totalL * c.rate;
+  const totalP = mPay.reduce((s,p)=>s+(p.amount||0),0);
+  const due = totalA - totalP;
+  const [yr,mo] = mon.split('-');
+  const monthName = new Date(+yr,+mo-1).toLocaleDateString('en-PK',{month:'long',year:'numeric'});
+  console.log('[RAMS] Bill built — totalL:', totalL, 'totalA:', totalA, 'due:', due);
+  return { c, entries, mPay, totalL, totalA, totalP, due, monthName, mon };
+}
+
+// ✅ FIX 3: buildBillHTML() — renders clean white HTML for canvas capture
+// This approach avoids jsPDF font issues with Urdu/mixed text
+function buildBillHTML(bd) {
+  const { c, entries, mPay, totalL, totalA, totalP, due, monthName } = bd;
+  const rowsHtml = entries.map((e,i) => `
+    <tr style="background:${i%2===0?'#fffbf0':'#ffffff'}">
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #e5e7eb">${fmtDate(e.date)}</td>
+      <td style="padding:6px 10px;font-size:12px;text-align:center;border-bottom:1px solid #e5e7eb">${e.absent ? '<span style="color:#9ca3af">Absent</span>' : (e.qty||0).toFixed(2)+' L'}</td>
+      <td style="padding:6px 10px;font-size:12px;text-align:center;border-bottom:1px solid #e5e7eb">${e.absent ? '—' : 'Rs. '+c.rate}</td>
+      <td style="padding:6px 10px;font-size:12px;text-align:right;border-bottom:1px solid #e5e7eb">${e.absent ? '—' : fmtMoneyFull((e.qty||0)*c.rate)}</td>
+    </tr>`).join('');
+  const paysHtml = mPay.length ? mPay.map(p=>`<tr><td style="padding:5px 10px;font-size:11px">${fmtDate(p.date)}</td><td style="padding:5px 10px;font-size:11px;font-weight:600;color:#16a34a">${fmtMoneyFull(p.amount)}</td><td style="padding:5px 10px;font-size:11px;color:#6b7280">${p.note||''}</td></tr>`).join('') : '';
+  return `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:0;width:100%">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#e8a020,#d97706);padding:28px 32px;color:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px">🐃 Rana Ahmad Milk Shop</div>
+          <div style="font-size:13px;opacity:.85;margin-top:4px;font-weight:600;letter-spacing:.08em">MILK  BILL &nbsp;·&nbsp; R.A.M.S</div>
+        </div>
+        <div style="text-align:right;font-size:12px;opacity:.9">
+          <div style="font-weight:700;font-size:15px">${monthName}</div>
+<div> ${new Date().toLocaleDateString('en-PK')} ${new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>          <div style="margin-top:6px;font-size:18px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Customer Info -->
+    <div style="padding:20px 32px;background:#fffbf0;border-bottom:2px solid #e8a020">
+      <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Customer Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><span style="font-size:11px;color:#6b7280">Name: </span><span style="font-weight:700;font-size:14px">${c.name}</span></div>
+        ${c.phone?`<div><span style="font-size:11px;color:#6b7280">Phone: </span><span style="font-weight:600">+92 ${c.phone}</span></div>`:''}
+        <div><span style="font-size:11px;color:#6b7280">Rate: </span><span style="font-weight:700;color:#d97706">Rs. ${c.rate} / Litre</span></div>
+      </div>
+    </div>
+    <!-- Table -->
+    <div style="padding:0 32px">
+      <table style="width:100%;border-collapse:collapse;margin:20px 0">
+        <thead>
+          <tr style="background:#f3f4f6">
+            <th style="padding:9px 10px;text-align:left;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #d1d5db">Date</th>
+            <th style="padding:9px 10px;text-align:center;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #d1d5db">Qty (L)</th>
+            <th style="padding:9px 10px;text-align:center;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #d1d5db">Rate</th>
+            <th style="padding:9px 10px;text-align:right;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #d1d5db">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml || '<tr><td colspan="4" style="text-align:center;padding:20px;color:#9ca3af;font-size:13px">No entries this month</td></tr>'}</tbody>
+      </table>
+    </div>
+    <!-- Totals -->
+    <div style="margin:0 32px 20px;border:2px solid #e8a020;border-radius:10px;overflow:hidden">
+      <div style="padding:12px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #fde68a">
+        <span style="font-size:13px;color:#6b7280">Total Litres</span>
+        <span style="font-weight:700;font-family:San Francisco',-apple-system,system-ui,sans-serif">${totalL.toFixed(2)} L</span>
+      </div>
+      <div style="padding:12px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #fde68a;background:#fffbf0">
+        <span style="font-size:13px;color:#6b7280">Total Billed</span>
+        <span style="font-weight:700;font-family:San Francisco',-apple-system,system-ui,sans-serif">${fmtMoneyFull(totalA)}</span>
+      </div>
+      <div style="padding:12px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #fde68a">
+        <span style="font-size:13px;color:#6b7280">Amount Paid</span>
+        <span style="font-weight:700;color:#16a34a;font-family:San Francisco',-apple-system,system-ui,sans-serif ">${fmtMoneyFull(totalP)}</span>
+      </div>
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;background:${due>0?'#fef2f2':'#f0fdf4'}">
+        <span style="font-size:15px;font-weight:800;color:${due>0?'#dc2626':'#15803d'}">Balance Due</span>
+        <span style="font-size:18px;font-weight:800;color:${due>0?'#dc2626':'#15803d'};font-family:San Francisco',-apple-system,system-ui,sans-serif">${fmtMoneyFull(due)}</span>
+      </div>
+    </div>
+    ${mPay.length?`
+    <div style="margin:0 32px 20px">
+      <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Payment History</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f3f4f6"><th style="padding:7px 10px;text-align:left;font-size:11px;font-weight:700;color:#374151">Date</th><th style="padding:7px 10px;text-align:left;font-size:11px;font-weight:700;color:#374151">Amount</th><th style="padding:7px 10px;text-align:left;font-size:11px;font-weight:700;color:#374151">Method</th></tr></thead>
+        <tbody>${paysHtml}</tbody>
+      </table>
+    </div>`:''}
+    <!-- Footer -->
+    <div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;text-align:center">
+      <div style="font-size:13px;font-weight:600;color:#374151">Thank you for your trust.</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:4px">Rana Ahmad Milk Shop &nbsp;|&nbsp;   &nbsp;|&nbsp; Generated by RAMS</div>
+    </div>
+  </div>`;
+}
+
+// ✅ FIX 2: previewBill() always rebuilds billData fresh
+function previewBill() {
+  console.log('[RAMS] previewBill() triggered');
+  billData = buildBillData();
+  if (!billData) return;
+  document.getElementById('bill-preview-content').innerHTML = buildBillHTML(billData);
+  openModal('modal-bill-preview');
+  console.log('[RAMS] Bill preview opened successfully');
+}
+
+// ✅ FIX 2 & 3: generatePDF() — canvas-to-PDF approach for Urdu/mixed text support
+async function generatePDF() {
+  console.log('[RAMS] generatePDF() triggered');
+  // Always rebuild billData
+  billData = buildBillData();
+  if (!billData) { console.error('[RAMS] generatePDF: billData is null, aborting'); return; }
+
+  // Library check
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    console.error('[RAMS] jsPDF not loaded!');
+    alert('PDF library not loaded. Please check your internet connection and refresh.');
+    return;
+  }
+  if (typeof window.html2canvas !== 'function') {
+    console.error('[RAMS] html2canvas not loaded!');
+    alert('html2canvas library not loaded. Please check your internet connection and refresh.');
+    return;
+  }
+
+  showLoading('Generating PDF…');
+  console.log('[RAMS] Rendering bill HTML to off-screen area…');
+
+  try {
+    // ✅ Render bill into the off-screen div
+    const renderArea = document.getElementById('bill-render-area');
+    renderArea.innerHTML = buildBillHTML(billData);
+    renderArea.style.display = 'block';
+
+    // Small delay so fonts/images render
+    await new Promise(r => setTimeout(r, 300));
+
+    console.log('[RAMS] Running html2canvas…');
+    const canvas = await html2canvas(renderArea, {
+      scale: 2,              // High DPI for sharp text
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: 794,
+    });
+
+    renderArea.style.display = 'none';
+    renderArea.innerHTML = '';
+
+    console.log('[RAMS] html2canvas done. Canvas size:', canvas.width, 'x', canvas.height);
+
+    // ✅ FIX 2: Convert canvas → PDF fitting A4 properly
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();   // 210mm
+    const pageH = pdf.internal.pageSize.getHeight();  // 297mm
+    const imgData = canvas.toDataURL('image/png');
+    const imgW = pageW;
+    const imgH = (canvas.height / canvas.width) * imgW;
+
+    if (imgH <= pageH) {
+      // Fits on one page
+      pdf.addImage(imgData, 'PNG', 0, 0, imgW, imgH);
+    } else {
+      // Multi-page: slice canvas into A4-height chunks
+      const canvasPageH = Math.floor(canvas.width * (pageH / pageW));
+      let srcY = 0;
+      while (srcY < canvas.height) {
+        const sliceH = Math.min(canvasPageH, canvas.height - srcY);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceH;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        const sliceData = sliceCanvas.toDataURL('image/png');
+        const sliceImgH = (sliceH / canvas.width) * pageW;
+        if (srcY > 0) pdf.addPage();
+        pdf.addImage(sliceData, 'PNG', 0, 0, pageW, sliceImgH);
+        srcY += sliceH;
+      }
+    }
+
+    const filename = `RAMS_${billData.c.name.replace(/\s/g,'_')}_${billData.mon}.pdf`;
+    pdf.save(filename);
+    console.log('[RAMS] ✅ PDF saved as:', filename);
+    hideLoading();
+    showToast('✅ PDF downloaded successfully!');
+    closeModal('modal-bill-preview');
+
+  } catch (err) {
+    hideLoading();
+    console.error('[RAMS] ❌ PDF generation failed:', err);
+    alert('PDF generation failed: ' + err.message + '\nCheck browser console for details.');
+  }
+}
+
+// ✅ FIX 2: downloadImage() — canvas.toDataURL('image/png') approach
+async function downloadImage() {
+  console.log('[RAMS] downloadImage() triggered');
+  billData = buildBillData();
+  if (!billData) return;
+  if (typeof window.html2canvas !== 'function') {
+    alert('html2canvas not loaded. Check your internet and refresh.');
+    return;
+  }
+  showLoading('Saving Image…');
+  try {
+    const renderArea = document.getElementById('bill-render-area');
+    renderArea.innerHTML = buildBillHTML(billData);
+    renderArea.style.display = 'block';
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(renderArea, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false, width: 794,
+    });
+
+    renderArea.style.display = 'none';
+    renderArea.innerHTML = '';
+
+    // ✅ FIX 2: canvas.toDataURL('image/png') download
+    const imgData = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = imgData;
+    a.download = `RAMS_${billData.c.name.replace(/\s/g,'_')}_${billData.mon}.png`;
+    a.click();
+    console.log('[RAMS] ✅ Image saved');
+    hideLoading();
+    showToast('🖼 Image saved!');
+  } catch (err) {
+    hideLoading();
+    console.error('[RAMS] ❌ Image save failed:', err);
+    alert('Image save failed: ' + err.message);
+  }
+}
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+function exportExcel() {
+  const mon=document.getElementById('report-month').value;
+  const cid=document.getElementById('report-customer').value;
+  const type=document.getElementById('report-type').value;
+  if(!mon){showToast('Select a month');return;}
+  const monthName=new Date(mon+'-01').toLocaleDateString('en-PK',{month:'long',year:'numeric'});
+  const targetC=cid?customers.filter(x=>x.id===cid):customers;
+  let csv='';
+  if(type==='summary'){
+    csv='Customer,Phone,Rate,Litres,Billed,Paid,Balance\n';
+    targetC.forEach(c=>{const L=ledger.filter(e=>e.date.startsWith(mon)&&e.customerId===c.id&&!e.absent).reduce((s,e)=>s+(e.qty||0),0);const A=L*c.rate;const P=payments.filter(p=>p.customerId===c.id&&p.date.startsWith(mon)).reduce((s,p)=>s+(p.amount||0),0);csv+=`"${c.name}","${c.phone||''}",${c.rate},${L.toFixed(2)},${Math.round(A)},${Math.round(P)},${Math.round(A-P)}\n`;});
+  } else if(type==='attendance'){
+    const dates=[...new Set(ledger.filter(e=>e.date.startsWith(mon)).map(e=>e.date))].sort();
+    csv='Customer,'+dates.map(fmtDate).join(',')+',Total L\n';
+    targetC.forEach(c=>{const row=dates.map(d=>{const e=ledger.find(x=>x.date===d&&x.customerId===c.id);return e?(e.absent?'A':(e.qty||0).toFixed(1)):'—';});const tL=ledger.filter(e=>e.date.startsWith(mon)&&e.customerId===c.id&&!e.absent).reduce((s,e)=>s+(e.qty||0),0);csv+=`"${c.name}",${row.join(',')},${tL.toFixed(1)}\n`;});
+  } else {
+    if(!cid){showToast('Select a customer for bill export');return;}
+    const c=targetC[0];if(!c)return;
+    csv=`Rana Ahmad Milk Shop - Bill - ${monthName}\n`;
+    csv+=`Customer: ${c.name},Phone: +92${c.phone||''},Rate: Rs.${c.rate}/L\n\n`;
+    csv+='Date,Qty (L),Rate,Amount\n';
+    ledger.filter(e=>e.date.startsWith(mon)&&e.customerId===cid).sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{csv+=`${fmtDate(e.date)},${e.absent?'Absent':(e.qty||0).toFixed(2)},${e.absent?'':c.rate},${e.absent?'':Math.round((e.qty||0)*c.rate)}\n`;});
+    const L=ledger.filter(e=>e.date.startsWith(mon)&&e.customerId===cid&&!e.absent).reduce((s,e)=>s+(e.qty||0),0);
+    const A=L*c.rate,P=payments.filter(p=>p.customerId===cid&&p.date.startsWith(mon)).reduce((s,p)=>s+(p.amount||0),0);
+    csv+=`\nTotal Litres,${L.toFixed(2)}\nTotal Billed,${Math.round(A)}\nPaid,${Math.round(P)}\nBalance Due,${Math.round(A-P)}\n`;
+  }
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  const a=document.createElement('a');a.href=url;a.download=`RAMS_${type}_${mon}.csv`;a.click();
+  URL.revokeObjectURL(url);showToast('📊 Excel/CSV downloaded!');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('ledger-date').value = todayStr();
+populateMonthOptions('report-month');
+renderDashboard();
+renderCustomers();
+renderLedger();
+console.log('[RAMS] ✅ App initialized. Customers:', customers.length);
+</script>
+</body>
+</html>
